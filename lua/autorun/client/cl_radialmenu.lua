@@ -44,80 +44,133 @@ function radialMenu.Open(items)
     end
 
     frame.PaintOver = function(_, w, h)
-        local cx, cy = w / 2, h / 2
-        local mouseX, mouseY = gui.MouseX(), gui.MouseY()
-        local dx, dy = mouseX - cx, mouseY - cy
-        local angle = math.deg(math.atan2(dy, dx))
-        if angle < 0 then angle = angle + 360 end
-        local innerRadius = ScrH() * 0.1875
-        local outerRadius = innerRadius * 2
+      local cx, cy = w / 2, h / 2
+      local mouseX, mouseY = gui.MouseX(), gui.MouseY()
+      local dx, dy = mouseX - cx, mouseY - cy
+      local angle = math.deg(math.atan2(-dy, dx))
+      if angle < 0 then angle = angle + 360 end
 
-        local segAngle = 360 / #radialMenu.Items
-        -- We need a tasteful gap between items
-        local segMargin = segAngle/20
-        radialMenu.Selected = nil
+      local innerRadius = ScrH() * 0.1875
+      local outerRadius = innerRadius * 2
+      local segAngle = 360 / #radialMenu.Items
+      local spacer   = (#radialMenu.Items > 1) and 4 or 0
+      radialMenu.Selected = nil
 
-        for i, item in ipairs(radialMenu.Items) do
-            local startAngle = ((i - 1) * segAngle)
-            local endAngle = (i * segAngle)
-            local isHover = angle >= startAngle and angle < endAngle and (math.sqrt(dx^2 + dy^2) > innerRadius)
+      for i, item in ipairs(radialMenu.Items) do
+        local startAngle = ((i - 1) * segAngle) + spacer / 2
+        local endAngle   = (i * segAngle) - spacer / 2
 
-            draw.NoTexture()
-            surface.SetDrawColor(isHover and Color(80, 180, 255, 160) or Color(40, 40, 40, 180))
-            draw.RingSegment(cx, cy, innerRadius, outerRadius, startAngle, endAngle, 4)
+        -- 1. ENABLE STENCIL FOR THIS SLICE
+        render.ClearStencil()
+        render.SetStencilEnable(true)
 
-            local midAngle = math.rad((startAngle + endAngle) / 2)
-            local textRadius = (innerRadius + outerRadius) / 2
-            local textX = cx + math.cos(midAngle) * (textRadius + 10)
-            local textY = cy + math.sin(midAngle) * (textRadius + 10)
+        render.SetStencilTestMask(255)
+        render.SetStencilWriteMask(255)
+        render.SetStencilReferenceValue(1)
 
-            if item.icon then
-                surface.SetMaterial(Material(item.icon))
-                surface.SetDrawColor(255, 255, 255)
-                surface.DrawTexturedRect(textX - 8, textY - 8, 16, 16)
-            end
+        --
+        -- STEP A: write mask = "where we want blue to appear"
+        -- mask = expanded outline arc
+        render.SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_NEVER)
+        render.SetStencilFailOperation(STENCILOPERATION_REPLACE)
+        render.SetStencilPassOperation(STENCILOPERATION_KEEP)
+        render.SetStencilZFailOperation(STENCILOPERATION_KEEP)
 
-            draw.SimpleText(item.label, "DermaDefaultBold", textX, textY + 14, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+        draw.NoTexture()
+        -- big outline area goes into stencil as 1
+        draw.Arc(cx, cy,
+            outerRadius+5,
+            outerRadius+10-innerRadius,
+            startAngle-spacer/4,
+            endAngle+spacer/4,
+            1,
+            color_white -- colour doesn't matter for mask
+        )
 
-            if isHover then
-                radialMenu.Selected = item
-            end
-        end
+        --
+        -- STEP B: "punch out" the red fill area from the mask
+        -- set stencil ref to 0, and replace where red would be
+        --
+        render.SetStencilReferenceValue(0)
+        render.SetStencilFailOperation(STENCILOPERATION_REPLACE)
+        render.SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_NEVER)
+
+        -- inner red region (the normal wedge)
+        draw.Arc(cx, cy,
+            outerRadius,
+            outerRadius - innerRadius,
+            startAngle,
+            endAngle,
+            1,
+            color_white
+        )
+
+        --
+        -- STEP C: now only draw where stencil == 1
+        --
+        render.SetStencilReferenceValue(1)
+        render.SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_EQUAL)
+        render.SetStencilFailOperation(STENCILOPERATION_KEEP)
+
+        surface.SetDrawColor(0, 0, 255, 200) -- blue outline colour actually drawn
+        draw.NoTexture()
+        draw.Arc(cx, cy,
+            outerRadius+5,
+            outerRadius+10-innerRadius,
+            startAngle-spacer/4,
+            endAngle+spacer/4,
+            1,
+            Color(0,0,0,220)
+        )
+
+        render.SetStencilEnable(false)
+
+        --
+        -- STEP D: now draw the solid red fill normally over everything
+        -- (no stencil, just paint)
+        --
+        surface.SetDrawColor(0, 0, 0, 200)
+        draw.NoTexture()
+        draw.Arc(cx, cy,
+            outerRadius,
+            outerRadius - innerRadius,
+            startAngle,
+            endAngle,
+            1,
+            Color(0,0,0,200)
+        )
     end
+
+      -- 4️⃣ Draw icons and labels (above everything)
+      for i, item in ipairs(radialMenu.Items) do
+          local startAngle = ((i - 1) * segAngle) + spacer / 2
+          local endAngle   = (i * segAngle) - spacer / 2
+          local midAngle   = math.rad((startAngle + endAngle) / 2)
+          local textRadius = (innerRadius + outerRadius) / 2
+          local textX = cx + math.cos(midAngle) * (textRadius + 10)
+          local textY = cy + math.sin(midAngle) * (textRadius + 10)
+
+          if item.icon then
+              surface.SetMaterial(Material(item.icon))
+              surface.SetDrawColor(255, 255, 255)
+              surface.DrawTexturedRect(textX - 8, textY - 8, 16, 16)
+          end
+          draw.SimpleText(item.label, "DermaDefaultBold", textX, textY + 14, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+      end
+  end
 end
-
--- Utility: draw a filled arc
-function draw.RingSegment(cx, cy, innerRadius, outerRadius, startAng, endAng, step)
-    local triangles = {}
-    if endAng < startAng then endAng = endAng + 360 end
-    local step = step or 2
-
-    for deg = startAng, endAng - step, step do
-        local rad1 = math.rad(deg)
-        local rad2 = math.rad(deg + step)
-
-        local inner1 = { x = cx + math.cos(rad1) * innerRadius, y = cy + math.sin(rad1) * innerRadius }
-        local inner2 = { x = cx + math.cos(rad2) * innerRadius, y = cy + math.sin(rad2) * innerRadius }
-        local outer1 = { x = cx + math.cos(rad1) * outerRadius, y = cy + math.sin(rad1) * outerRadius }
-        local outer2 = { x = cx + math.cos(rad2) * outerRadius, y = cy + math.sin(rad2) * outerRadius }
-
-        table.insert(triangles, { outer1, outer2, inner1 })
-        table.insert(triangles, { inner1, outer2, inner2 })
-    end
-
-    for _, tri in ipairs(triangles) do
-        surface.DrawPoly(tri)
-    end
-end
-
-
 -- Bind to a key (example)
 hook.Add( "Tick", "KeyDown_Test", function()
   if input.IsKeyDown(KEY_R) then
           radialMenu.Open({
               { label = "Pistol", icon = "icon16/gun.png", onSelect = function() RunConsoleCommand("give", "weapon_pistol") end },
               { label = "SMG", icon = "icon16/bullet_black.png", onSelect = function() RunConsoleCommand("give", "weapon_smg1") end },
+               { label = "Pistol", icon = "icon16/gun.png", onSelect = function() RunConsoleCommand("give", "weapon_pistol") end },
+              { label = "SMG", icon = "icon16/bullet_black.png", onSelect = function() RunConsoleCommand("give", "weapon_smg1") end },
+               { label = "Pistol", icon = "icon16/gun.png", onSelect = function() RunConsoleCommand("give", "weapon_pistol") end },
+              { label = "SMG", icon = "icon16/bullet_black.png", onSelect = function() RunConsoleCommand("give", "weapon_smg1") end },
+               { label = "Pistol", icon = "icon16/gun.png", onSelect = function() RunConsoleCommand("give", "weapon_pistol") end },
+              { label = "SMG", icon = "icon16/bullet_black.png", onSelect = function() RunConsoleCommand("give", "weapon_smg1") end },
            })
     end
 end)
-
