@@ -45,8 +45,9 @@ local function class_default_model(data)
 end
 
 local model_angle_override = {
-    ["models/weapons/w_toolgun.mdl"] = Angle(0, 0, 0),
+    ["models/weapons/w_c4_planted.mdl"] = Angle(90, 90, 0),
     ["models/MaxOfS2D/camera.mdl"]  = Angle(0, 90, 0),
+    ["models/weapons/w_toolgun.mdl"] = Angle(0, 90, 0),
     [placeholder_model] = Angle(0, 90, 0),
     [error_model]       = Angle(0, 90, 0),
 }
@@ -86,8 +87,8 @@ local MAT_MODELCOLOR = CreateMaterial(unique_name(), "VertexLitGeneric", { ["$ba
 local MAT_TEXTURE    = CreateMaterial(unique_name(), "UnlitGeneric",   { ["$basetexture"] = "lights/white", ["$vertexcolor"] = "1" })
 local MAT_DESATURATE = CreateMaterial(unique_name(), "g_colourmodify", {
     ["$fbtexture"] = "lights/white",
-    ["$pp_colour_brightness"] = -0.25,
-    ["$pp_colour_contrast"]   = 3,
+    ["$pp_colour_brightness"] = -0.175,
+    ["$pp_colour_contrast"]   = 1.75,
     ["$pp_colour_colour"]     = 0
 })
 

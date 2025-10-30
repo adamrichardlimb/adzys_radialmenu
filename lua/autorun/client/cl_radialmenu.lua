@@ -191,7 +191,7 @@ hook.Add( "Tick", "KeyDown_Test", function()
             { label = "Deagle",  model = "models/weapons/w_pist_deagle.mdl", onSelect = function() RunConsoleCommand("give", "weapon_deagle") end },
             { label = "Rifle",   model = "models/weapons/w_snip_scout.mdl", onSelect = function() RunConsoleCommand("give", "weapon_scout") end },
             { label = "Knife",   model = "models/weapons/w_knife_t.mdl", onSelect = function() RunConsoleCommand("give", "weapon_knife") end },
-            { label = "C4",      model = "models/weapons/w_c4_planted.mdl", onSelect = function() RunConsoleCommand("give", "weapon_c4") end },
+            { label = "C4",      model = "models/weapons/w_c4_planted.mdl", iconAngle = Angle(0,90,0), onSelect = function() RunConsoleCommand("give", "weapon_c4") end },
             { label = "SMG",     model = "models/weapons/w_smg1.mdl", onSelect = function() RunConsoleCommand("give", "weapon_smg1") end },
         })
     end
