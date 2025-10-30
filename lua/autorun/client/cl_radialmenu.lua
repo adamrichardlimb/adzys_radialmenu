@@ -6,6 +6,24 @@ radialMenu.Selected = nil
 
 print("[Adzy's Radial Menu - Loaded...]")
 
+local function DrawAutoIcon(mat, x, y, w, h, col)
+    col = col or Vector(1, 1, 1)
+
+    cam.Start2D()
+        render.SetMaterial(mat)
+        mat:SetVector("$color2", col)
+        render.OverrideBlend(
+            true,
+            BLEND_ONE_MINUS_DST_COLOR, BLEND_ONE, BLENDFUNC_ADD,
+            BLEND_ZERO, BLEND_ONE, BLENDFUNC_ADD
+        )
+        render.OverrideDepthEnable(true, false)
+        render.DrawScreenQuadEx(x, y, w, h)
+        render.OverrideDepthEnable(false, false)
+        render.OverrideBlend(false)
+    cam.End2D()
+end
+
 function radialMenu.Open(items)
     if radialMenu.Active then return end
     radialMenu.Items = items or {}
@@ -15,10 +33,7 @@ function radialMenu.Open(items)
     -- create a cached material for each model
     for _, item in ipairs(radialMenu.Items) do
         if item.model then
-            item._mat = createWireframeMaterial("radial_" .. item.label, item.model, item.offsets or {
-                pos = Vector(40, 0, 5),
-                angle = Angle(0, 90, 0)
-            })
+            item._mat = autoicon.Get(item.model)
         end
     end
 
@@ -142,47 +157,42 @@ function radialMenu.Open(items)
             1,
             Color(0,0,0,200)
         )
-      end
+    end
 
-    -- 4️⃣ Draw icons and labels (above everything)
+      -- 4️⃣ Draw icons and labels (above everything)
       for i, item in ipairs(radialMenu.Items) do
           local startAngle = ((i - 1) * segAngle) + spacer / 2
           local endAngle   = (i * segAngle) - spacer / 2
           local midAngle   = math.rad((startAngle + endAngle) / 2)
           local textRadius = (innerRadius + outerRadius) / 2
           local textX = cx + math.cos(midAngle) * (textRadius + 10)
-          local textY = cy + math.sin(midAngle) * (textRadius + 10)
+          local textY = cy + math.sin(midAngle) * (textRadius + 10)          
 
           -- 3D model icon (centre of segment)
           if item._mat then
+              local midAngle = math.rad((startAngle + endAngle) / 2)
+              local textRadius = (innerRadius + outerRadius) / 2
               local size = 192
               local x = cx + math.cos(midAngle) * textRadius - size / 2
               local y = cy + math.sin(midAngle) * textRadius - size / 2
 
-              surface.SetMaterial(item._mat)
-              surface.SetDrawColor(255, 255, 255, 255)
-              surface.DrawTexturedRect(x, y, size, size)
+              DrawAutoIcon(item._mat, x, y, size, size, Vector(1, 1, 1))
           end
 
-          -- ✅ draw text along the outer rim
-          local labelRadius = outerRadius + 40
-          local lx = cx + math.cos(midAngle) * labelRadius
-          local ly = cy + math.sin(midAngle) * labelRadius
-          draw.SimpleText(item.label or "", "DermaDefaultBold", lx, ly, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+          draw.SimpleText(item.label, "DermaDefaultBold", textX, textY + 14, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
       end
   end
 end
-
 -- Bind to a key (example)
-hook.Add("Tick", "KeyDown_Test", function()
+hook.Add( "Tick", "KeyDown_Test", function()
   if input.IsKeyDown(KEY_R) then
           radialMenu.Open({
             { label = "Crowbar", model = "models/weapons/w_crowbar.mdl", onSelect = function() RunConsoleCommand("give", "weapon_crowbar") end },
             { label = "Deagle",  model = "models/weapons/w_pist_deagle.mdl", onSelect = function() RunConsoleCommand("give", "weapon_deagle") end },
             { label = "Rifle",   model = "models/weapons/w_snip_scout.mdl", onSelect = function() RunConsoleCommand("give", "weapon_scout") end },
-            { label = "Knife",   model = "models/weapons/w_knife_t.mdl",  onSelect = function() RunConsoleCommand("give", "weapon_knife") end },
+            { label = "Knife",   model = "models/weapons/w_knife_t.mdl", onSelect = function() RunConsoleCommand("give", "weapon_knife") end },
             { label = "C4",      model = "models/weapons/w_c4_planted.mdl", onSelect = function() RunConsoleCommand("give", "weapon_c4") end },
-            { label = "SMG",     model = "models/weapons/w_smg1.mdl",  onSelect = function() RunConsoleCommand("give", "weapon_smg1") end },
+            { label = "SMG",     model = "models/weapons/w_smg1.mdl", onSelect = function() RunConsoleCommand("give", "weapon_smg1") end },
         })
     end
 end)
