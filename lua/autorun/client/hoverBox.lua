@@ -1,4 +1,4 @@
-function DrawBox(title, desc)
+function DrawBox(title, desc, disabled)
   title = title or ""
   desc = desc or ""
 
@@ -74,7 +74,7 @@ function DrawBox(title, desc)
       draw.RoundedBox(4, x, y, boxW, boxH, Color(0,0,0,225))
 
       -- draw title
-      draw.SimpleText(title, titleFont, x + pad, y + pad, color_white)
+      draw.SimpleText(title, titleFont, x + pad, y + pad, disabled and Color(220, 0, 0, 255) or color_white)
 
       -- draw wrapped description
       local cursorY = y + pad + th + 2

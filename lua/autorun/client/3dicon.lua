@@ -45,11 +45,13 @@ local function class_default_model(data)
 end
 
 local model_angle_override = {
-    ["models/weapons/w_c4_planted.mdl"] = Angle(90, 90, 0),
+    ["models/weapons/w_c4.mdl"] = Angle(90, 90, 0),
     ["models/MaxOfS2D/camera.mdl"]  = Angle(0, 90, 0),
     ["models/weapons/w_toolgun.mdl"] = Angle(0, 90, 0),
     [placeholder_model] = Angle(0, 90, 0),
     [error_model]       = Angle(0, 90, 0),
+    ["models/barneyhelmet_faceplate.mdl"] = Angle(0, 90, 0),
+    ["models/props_rooftop/roof_dish001.mdl"] = Angle(0, 10, 0)
 }
 
 local function autoicon_params(data)
