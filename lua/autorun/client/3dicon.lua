@@ -51,7 +51,9 @@ local model_angle_override = {
     [placeholder_model] = Angle(0, 90, 0),
     [error_model]       = Angle(0, 90, 0),
     ["models/barneyhelmet_faceplate.mdl"] = Angle(0, 90, 0),
-    ["models/props_rooftop/roof_dish001.mdl"] = Angle(0, 10, 0)
+    ["models/props_rooftop/roof_dish001.mdl"] = Angle(0, 10, 0),
+    ["models/Gibs/HGIBS.mdl"] = Angle(0, 45, 0),
+    ["models/zombie/zombie_soldier_legs.mdl"] = Angle(0, 90, 0)
 }
 
 local function autoicon_params(data)
