@@ -1,7 +1,8 @@
-include("3dicon.lua")
-include("drawarc.lua")
-
 -- lua/autorun/client/cl_radialmenu.lua
+
+-- If 3dicon.lua used to contain your AutoIcon implementation,
+-- remove that old code from it. Keep this include only if it still contains helpers.
+include("drawarc.lua")
 
 _G.CreateRadialMenu = _G.CreateRadialMenu or function()
     local radialMenu = {}
@@ -40,11 +41,20 @@ _G.CreateRadialMenu = _G.CreateRadialMenu or function()
         _G.RadialMenu_ActiveInstance = self
         gui.EnableScreenClicker(true)
 
+        -- Pre-load icons
         for _, item in ipairs(self.Items) do
             if item.model then
-                item._mat = autoicon.Get(item.model)
+                -- Use stand-alone autoicon addon
+                if autoicon and autoicon.Get then
+                    item._mat = autoicon.Get(item.model)
+                else
+                    print("[RadialMenu] autoicon library missing, skipping autoicon for", item.model)
+                    item._mat = nil
+                end
+
             elseif item.icon then
                 item._mat = Material(item.icon, "smooth")
+
             elseif item.avatar then
                 if not item._avatarPanel then
                     item._avatarPanel = vgui.Create("AvatarImage")
@@ -200,14 +210,14 @@ _G.CreateRadialMenu = _G.CreateRadialMenu or function()
             end
 
             if self.Selected then
-              local item = self.Selected
-              local label = item.label
-              if item.isDisabled then
-                if item.disabledText then label = item.label .. " " .. item.disabledText
-                else label = item.label .. " " .. "[DISABLED]"
+                local item = self.Selected
+                local label = item.label
+                if item.isDisabled then
+                    if item.disabledText then label = item.label .. " " .. item.disabledText
+                    else label = item.label .. " " .. "[DISABLED]"
+                    end
                 end
-              end
-              DrawBox(label, self.Selected.description, item.isDisabled)
+                DrawBox(label, self.Selected.description, item.isDisabled)
             end
         end
     end
